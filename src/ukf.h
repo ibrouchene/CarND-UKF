@@ -69,7 +69,7 @@ public:
 
   long long previous_timestamp_;
 
-  int n_augmented_mat_dim;
+  int n_augmented_mat_dim_;
 
   /**
    * Constructor
@@ -123,6 +123,14 @@ public:
   * Predicts the mean and covariance using the predicted sigma points.
   */
   void PredictMeanAndCovariance(void);
+
+  /**
+  * Predicts radar measurements
+  * @param {z_out} Pointer to the vector storing the mean predicted measurement
+  * @param {S_out} Pointer to the matrix storing the measurement covariance matrix S
+  * @param {Z_sigma_points} Pointer to the matrix storing the sigma points transformed in the measurement space
+  */
+  void PredictRadarMeasurements(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Z_sigma_points);
 };
 
 #endif /* UKF_H */
