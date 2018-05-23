@@ -131,6 +131,14 @@ public:
   * @param {Z_sigma_points} Pointer to the matrix storing the sigma points transformed in the measurement space
   */
   void PredictRadarMeasurements(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Z_sigma_points);
+
+  /**
+  * Predicts lidar measurements
+  * @param {z_out} Pointer to the vector storing the mean predicted measurement
+  * @param {S_out} Pointer to the matrix storing the measurement covariance matrix S
+  * @param {Z_sigma_points} Pointer to the matrix storing the sigma points transformed in the measurement space
+  */
+  void PredictLidarMeasurements(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Z_sigma_points);
 };
 
 #endif /* UKF_H */

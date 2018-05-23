@@ -25,10 +25,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 0.5; // 30 m/s^2 is way too high for an acceleration noise value
+  std_a_ = 2; // 30 m/s^2 is way too high for an acceleration noise value
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 0.01; // 30 rad/s^2 is way too high for a yaw rate rate value
+  std_yawdd_ = 1; // 30 rad/s^2 is way too high for a yaw rate rate value
   
   //DO NOT MODIFY measurement noise values below these are provided by the sensor manufacturer.
   // Laser measurement noise standard deviation position1 in m
@@ -109,7 +109,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       UpdateRadar(meas_package);
     }
     else {
-      /* Not yet implemented */
+      UpdateLidar(meas_package);
     }
     previous_timestamp_ = meas_package.timestamp_;
   }
@@ -143,6 +143,34 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   You'll also need to calculate the lidar NIS.
   */
+  /* Step 1: Predict lidar measurements */
+  VectorXd z_pred = VectorXd(2);
+  MatrixXd S = MatrixXd(2, 2);
+  MatrixXd Z_sigma_points = MatrixXd(2, n_augmented_mat_dim_);
+  PredictLidarMeasurements(&z_pred, &S, &Z_sigma_points);
+  /* Step 2: Update state vector */
+  MatrixXd Tc = MatrixXd(n_x_, 2);
+  //calculate cross correlation matrix
+  Tc.fill(0.0);
+  for (int i = 0; i < n_augmented_mat_dim_; i++) {  //2n+1 simga points
+
+                                                    //residual
+    VectorXd z_diff = Z_sigma_points.col(i) - z_pred;
+    // state difference
+    VectorXd x_diff = Xsig_pred_.col(i) - x_;
+    Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
+  }
+
+  //Kalman gain K;
+  MatrixXd K = Tc * S.inverse();
+
+  //residual
+  VectorXd z_diff = meas_package.raw_measurements_ - z_pred;
+
+  //update state mean and covariance matrix
+  x_ = x_ + K * z_diff;
+  P_ = P_ - K*S*K.transpose();
+  /* Step 3: Compute NIS */
 }
 
 /**
@@ -374,4 +402,55 @@ void UKF::PredictRadarMeasurements(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Z
   *S_out = S;
   *Z_sigma_points = Zsig;
 
+}
+
+
+/**
+* Predicts lidar measurements
+* @param {z_out} Pointer to the vector storing the mean predicted measurement
+* @param {S_out} Pointer to the matrix storing the measurement covariance matrix S
+* @param {Z_sigma_points} Pointer to the matrix storing the sigma points transformed in the measurement space
+*/
+void UKF::PredictLidarMeasurements(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Z_sigma_points)
+{
+  MatrixXd Zsig = MatrixXd(2, n_augmented_mat_dim_);
+
+  for (int i = 0; i < n_augmented_mat_dim_; i++) {  //2n+1 simga points
+
+                                                    // extract values for better readibility
+    double p_x = Xsig_pred_(0, i);
+    double p_y = Xsig_pred_(1, i);
+    
+    // measurement model
+    Zsig(0, i) = p_x;
+    Zsig(1, i) = p_y;
+  }
+
+  //mean predicted measurement
+  VectorXd z_pred = VectorXd(2);
+  z_pred.fill(0.0);
+  for (int i = 0; i < n_augmented_mat_dim_; i++) {
+    z_pred = z_pred + weights_(i) * Zsig.col(i);
+  }
+
+  //innovation covariance matrix S
+  MatrixXd S = MatrixXd(2, 2);
+  S.fill(0.0);
+  for (int i = 0; i < n_augmented_mat_dim_; i++) {  //2n+1 simga points
+                                                    //residual
+    VectorXd z_diff = Zsig.col(i) - z_pred;
+
+    S = S + weights_(i) * z_diff * z_diff.transpose();
+  }
+
+  //add measurement noise covariance matrix
+  MatrixXd R = MatrixXd(2, 2);
+  R << std_laspx_*std_laspx_, 0,
+    0, std_laspy_*std_laspy_;
+
+  S = S + R;
+
+  *z_out = z_pred;
+  *S_out = S;
+  *Z_sigma_points = Zsig;
 }
