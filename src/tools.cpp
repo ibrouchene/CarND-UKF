@@ -62,3 +62,39 @@ MatrixXd Tools::CalculateJacobian(const VectorXd& x_state) {
 
 	return Hj;
 }
+
+VectorXd Tools::ComputeNISStats(const vector<double> &nis_vector) {
+  double sum = 0;
+  double mean = 0;
+  double residual = 0;
+  double std = 0;
+  double stat = 0;
+  double count = 0;
+  VectorXd ret(3);
+  ret << 0, 0, 0;
+  if (nis_vector.size() > 10) {
+    for (unsigned int i = 0; i < nis_vector.size(); ++i) {
+      sum += nis_vector[i];
+      if (nis_vector[i] > 5.99) { // Change value to 7.8 for radar!
+        count += 1;
+      }
+    }
+    mean = sum / nis_vector.size();
+    ret(1) = mean;
+    for (unsigned int i = 0; i < nis_vector.size(); ++i) {
+      residual += ((nis_vector[i] - mean)*(nis_vector[i] - mean));
+    }
+    std = sqrt(residual / mean);
+    ret(2) = std;
+    stat = count / (double)nis_vector.size();
+    ret(0) = stat;
+  }
+  return ret;
+}
+
+double Tools::NormalizeAngle(double angle)
+{
+  while (angle> M_PI) angle -= 2.*M_PI;
+  while (angle<-M_PI) angle += 2.*M_PI;
+  return angle;
+}

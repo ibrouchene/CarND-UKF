@@ -29,6 +29,16 @@ public:
   */
   MatrixXd CalculateJacobian(const VectorXd& x_state);
 
+  /**
+  * A helper method to calculate NIS data.
+  */
+  VectorXd ComputeNISStats(const vector<double> &nis_vector);
+
+  /**
+  * Angle normalization
+  * @param {angle} angle to normalize
+  */
+  double NormalizeAngle(double angle);
 };
 
 #endif /* TOOLS_H_ */

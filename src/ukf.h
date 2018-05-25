@@ -5,7 +5,9 @@
 #include "Eigen/Dense"
 #include <vector>
 #include <string>
+#include <iostream>
 #include <fstream>
+#include "tools.h"
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -71,6 +73,12 @@ public:
 
   int n_augmented_mat_dim_;
 
+  std::ofstream output_file_;
+
+  double nis_radar_;
+  double nis_lidar_;
+
+  Tools tools_;
   /**
    * Constructor
    */

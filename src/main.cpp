@@ -37,8 +37,9 @@ int main()
   Tools tools;
   vector<VectorXd> estimations;
   vector<VectorXd> ground_truth;
+  vector<double> nis_vector;
 
-  h.onMessage([&ukf,&tools,&estimations,&ground_truth](uWS::WebSocket<uWS::SERVER>* ws, char *data, size_t length, uWS::OpCode opCode) {
+  h.onMessage([&ukf,&tools,&estimations,&ground_truth,&nis_vector](uWS::WebSocket<uWS::SERVER>* ws, char *data, size_t length, uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -116,7 +117,10 @@ int main()
     	  double p_y = ukf.x_(1);
     	  double v  = ukf.x_(2);
     	  double yaw = ukf.x_(3);
-
+        /* Just debug variable for visualizing the nis stats 
+        double radar_nis = ukf.nis_radar_;
+        double lidar_nis = ukf.nis_lidar_;
+        */
     	  double v1 = cos(yaw)*v;
     	  double v2 = sin(yaw)*v;
 
@@ -127,15 +131,36 @@ int main()
     	  
     	  estimations.push_back(estimate);
 
-        VectorXd RMSE = tools.CalculateRMSE(estimations, ground_truth);
-
         json msgJson;
+        /*
+        if ((sensor_type.compare("R") == 0) && (estimations.size() > 1)) {
+          nis_vector.push_back(radar_nis);
+          VectorXd NIS = tools.ComputeNISStats(nis_vector);
+          msgJson["estimate_x"] = p_x;
+          msgJson["estimate_y"] = p_y;
+          msgJson["rmse_x"] = NIS(0); // RMSE(0);
+          msgJson["rmse_y"] = NIS(1);;
+          msgJson["rmse_vx"] = NIS(2);
+          msgJson["rmse_vy"] = 0.0f;
+        }
+        else {
+          VectorXd NIS = tools.AccumulateNIS(nis_vector);
+          msgJson["estimate_x"] = p_x;
+          msgJson["estimate_y"] = p_y;
+          msgJson["rmse_x"] = NIS(0); // RMSE(0);
+          msgJson["rmse_y"] = NIS(1);;
+          msgJson["rmse_vx"] = NIS(2);
+          msgJson["rmse_vy"] = 0.0f;
+        }
+        */
+        VectorXd RMSE = tools.CalculateRMSE(estimations, ground_truth);
         msgJson["estimate_x"] = p_x;
         msgJson["estimate_y"] = p_y;
         msgJson["rmse_x"] = RMSE(0);
-        msgJson["rmse_y"] = RMSE(1);
+        msgJson["rmse_y"] = RMSE(1);;
         msgJson["rmse_vx"] = RMSE(2);
         msgJson["rmse_vy"] = RMSE(3);
+
         auto msg = "42[\"estimate_marker\"," + msgJson.dump() + "]";
         //std::cout << msg << std::endl;
         ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
