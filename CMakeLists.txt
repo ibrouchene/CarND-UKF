@@ -1,4 +1,4 @@
-project(ExtendedKF)
+project(UnscentedKF)
 
 cmake_minimum_required (VERSION 3.5)
 
@@ -21,6 +21,6 @@ link_directories(/usr/local/Cellar/libuv/1*/lib)
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
 
 
-add_executable(ExtendedKF ${sources})
+add_executable(UnscentedKF ${sources})
 
-target_link_libraries(ExtendedKF z ssl uv uWS)
+target_link_libraries(UnscentedKF z ssl uv uWS)
